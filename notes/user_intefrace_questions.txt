@@ -1,0 +1,8 @@
+
+
+1) Suppose the user has loaded images into the viewer. Will the annotations
+   (i.e. bounding boxes) for these images ever be loaded piecemeal? That is, will
+   the user load bounding boxes from one file, and then want to load bounding
+   boxes from another file?
+
+2) 

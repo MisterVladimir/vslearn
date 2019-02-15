@@ -1,0 +1,26 @@
+<annotation>
+	<folder>test_folder</folder>
+	<filename>boxes1.jpg</filename>
+	<path>/test/loading/labelImg/bounding/boxes1.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>500</width>
+		<height>700</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>pill</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>173</xmin>
+			<ymin>344</ymin>
+			<xmax>261</xmax>
+			<ymax>429</ymax>
+		</bndbox>
+	</object>
+</annotation>

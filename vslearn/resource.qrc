@@ -1,0 +1,9 @@
+<RCC>
+  <qresource>
+    <file>icons/magnifying_glass_zoom_in.png</file>
+    <file>icons/magnifying_glass_zoom_out.png</file>
+    <file>icons/resize.png</file>
+    <file>icons/accept.jpeg</file>
+    <file>icons/reject.jpeg</file>
+  </qresource>
+</RCC>

@@ -1,0 +1,17 @@
+1) If images are loaded once, loading another folder of images crashes the
+   program.
+
+    Traceback (most recent call last):
+        File ".../vslearn/vslearn/main_window.py", line 525, in display_bounding_boxes
+            self.scene.hide()
+        File ".../vslearn/vslearn/models/scene.py", line 109, in hide
+            self._set_group_visible(_image_id, False)
+        File ".../vslearn/vslearn/models/scene.py", line 99, in _set_group_visible
+            group.setVisible(visible)
+        RuntimeError: wrapped C/C++ object of type WGraphicsItemGroup has been deleted
+        Aborted (core dumped)
+
+    This is probably to do with how the WGraphicsScene clears the old images,
+    or something as a consequence of the image_registry_reset signal.
+
+
