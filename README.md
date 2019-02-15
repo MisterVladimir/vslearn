@@ -7,7 +7,7 @@ vslearn
 
 Introduction
 ------------------
-*vslearn* is an image annotation tool that helps non-technical folks generate ground truth bounding box data used as ground truth for training object detection convolutional neural networks. I created this product as part of my [Insight Data Science](https://www.insightdatascience.com/) project consulting for [WellthApp](https://wellthapp.com/home).
+*vslearn* is an image annotation tool that helps non-technical folks generate ground truth bounding boxes used in training neural networks. Basically: (1) humans draw bounding boxes around objects of interest and (2) feed the images + bounding boxes into a neural net so it can learn to predict bounding boxes around similar objects. I created this product as part of my [Insight Data Science](https://www.insightdatascience.com/) project consulting for [WellthApp](https://wellthapp.com/home).
 
 
 Installation
