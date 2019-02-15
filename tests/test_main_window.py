@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QAbstractButton
 from PyQt5.QtCore import Qt
 
 from config import TEST_DATA_DIR, temporarily_skipping
-from vslearn.gui.main_window import WMainWindow
+from vslearn.main_window import WMainWindow
 from vslearn.enums import DataFileType
 
 
