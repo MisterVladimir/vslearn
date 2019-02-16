@@ -17,7 +17,7 @@ Please clone from source by issuing the following shell commands:
 > cd vslearn  
 > pip install .  
 
-To run, navigate to the folder in which vslearn is installed, and run  
+To run, navigate to the folder in which vslearn is installed, and enter the following shell command:  
 > python main.py  
 
 
