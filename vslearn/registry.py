@@ -311,10 +311,12 @@ class AnnotationRegistry(object):
         if img_id not in self._img_id_to_annotation:
             raise ValueError('{} not in this registry.'.format(img_id))
         elif isinstance(arg, Dict):
+            # print('arg is Dict: {}'.format(arg))
             annotation = self._img_id_to_annotation[img_id]
             for k, v in arg.items():
                 setattr(annotation, k, v)
         elif isinstance(arg, Annotation):
+            # print('arg is an annotation: {}'.format(str(arg)))
             annotation = arg
         self._add_annotation_to_registry(img_id, annotation)
 

@@ -14,4 +14,6 @@
     This is probably to do with how the WGraphicsScene clears the old images,
     or something as a consequence of the image_registry_reset signal.
 
-
+2) Specific to pyside2 migration
+    a) items in folder not displayed in Open Images...
+       file dialog.

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtWidgets import QMessageBox, QWidget
+from qtpy.QtWidgets import QMessageBox, QWidget
 
 
 class _WMessageBoxBase(QMessageBox):

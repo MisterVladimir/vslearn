@@ -47,7 +47,7 @@ warning.py
     avoid glossing over bugs.
 """
 import os
-from PyQt5.uic import loadUiType as _loadUiType
+from qtpy.uic import loadUiType as _loadUiType
 from typing import Any, Dict, Iterable, List, NamedTuple
 
 from .enums import MachineLearningMode

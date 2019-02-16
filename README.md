@@ -23,7 +23,7 @@ After cloning the repo, run the following command from the root:
 
 Requirements
 ------------------
-PyQt5  
+pyside2  
 tensorflow  
 dataclasses
 

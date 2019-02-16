@@ -6,9 +6,9 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 from PIL import Image
-from PyQt5.QtWidgets import (
+from qtpy.QtWidgets import (
     QAbstractButton, QButtonGroup, QColorDialog, QFileDialog, QGraphicsView)
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
+from qtpy.QtCore import QObject, Signal, Slot
 
 from . import UI_DIR, loadUiType
 from .enums import DataFileType, MachineLearningMode, UserType
@@ -25,7 +25,7 @@ FormClass, QtBaseClass = loadUiType(main_window_filename)
 
 
 class WButtonGroup(QButtonGroup):
-    check_state_changed = pyqtSignal(list)
+    check_state_changed = Signal(list)
     """
     A container for buttons. In WButtonGroup, we can set a minimum and maximum
     number of buttons that can remain in the "checked" and "unchecked" states.
@@ -103,7 +103,7 @@ class WButtonGroup(QButtonGroup):
         for button in self.buttons():
             button.setEnabled(enable)
 
-    @pyqtSlot(QAbstractButton)
+    @Slot(QAbstractButton)
     def _update_buttons(self, button: QAbstractButton) -> None:
         """
         Called *after* button has been clicked. See QAbstractButton.clicked().
@@ -147,14 +147,14 @@ class WButtonGroup(QButtonGroup):
 class WMainWindow(QtBaseClass, FormClass):
     # 'selected' means the user has chosen that item/category from
     # an QFileDialog
-    files_selected = pyqtSignal(str, int)
-    image_registry_created = pyqtSignal()
-    annotation_registry_created = pyqtSignal()
-    images_about_to_reset = pyqtSignal()
-    images_were_reset = pyqtSignal()
-    bounding_boxes_about_to_reset = pyqtSignal()
-    bounding_boxes_were_reset = pyqtSignal()
-    scrollbar_value_about_to_change = pyqtSignal()
+    files_selected = Signal(str, int)
+    image_registry_created = Signal()
+    annotation_registry_created = Signal()
+    images_about_to_reset = Signal()
+    images_were_reset = Signal()
+    bounding_boxes_about_to_reset = Signal()
+    bounding_boxes_were_reset = Signal()
+    scrollbar_value_about_to_change = Signal()
 
     def __init__(self):
         super().__init__()
@@ -226,6 +226,8 @@ class WMainWindow(QtBaseClass, FormClass):
         self.image_registry_created.connect(self.scene.reset_images)
         self.images_were_reset.connect(self._reset_scrollbar)
 
+        self.bounding_boxes_were_reset.connect(self._reset_scrollbar)
+
         # File -> Export to... -> JSON
         self.action_to_JSON.triggered.connect(
             lambda: self.save(DataFileType.JSON))
@@ -256,8 +258,9 @@ class WMainWindow(QtBaseClass, FormClass):
         self.action_bounding_box_color.triggered.connect(
             self.set_bounding_box_color)
 
-        # TODO: prevent loading images while scrollbar is dragged; loading
-        # images too quickly sometimes causes a segfault
+        # XXX is it worth putting display_image and display_bounding_boxes into
+        # one method or is there a case we want to display an image
+        # without bounding boxes?
         self.scrollbar.valueChanged[int].connect(self.display_image)
         self.scrollbar.valueChanged[int].connect(self.display_bounding_boxes)
         # self.scrollbar.valueChanged[int].connect(self._data_entry_finished)
@@ -280,29 +283,25 @@ class WMainWindow(QtBaseClass, FormClass):
         for widget in widgets:
             widget.setEnabled(True)
 
-    @pyqtSlot(bool)
+    @Slot(bool)
     def _set_drag_mode(self, off: bool):
         if off:
             self.graphics_view.setDragMode(QGraphicsView.NoDrag)
         else:
             self.graphics_view.setDragMode(QGraphicsView.RubberBandDrag)
 
-    @pyqtSlot(bool)
+    @Slot(bool)
     def _set_edit_mode(self, edit: bool):
         self.scene.set_edit_mode(self.get_current_image_id(), edit)
 
-    @pyqtSlot(list)
+    @Slot(list)
     def _set_edit_mode_from_button_list(self, buttons: List[QAbstractButton]):
         if self.button_reject in buttons:
             self._set_edit_mode(True)
         else:
             self._set_edit_mode(False)
 
-    @pyqtSlot(int)
-    def _scrollbar_value_changed(self, index: int):
-        pass
-
-    @pyqtSlot()
+    @Slot()
     def _enter_button_pressed(self):
         """
         This method achieves two things. The simplest is advancing the
@@ -318,7 +317,7 @@ class WMainWindow(QtBaseClass, FormClass):
             self.scrollbar.setValue(current_index + 1)
             self.scrollbar.valueChanged.emit(current_index + 1)
 
-    @pyqtSlot(int)
+    @Slot(int)
     def _set_statusbar_message(self, index: int):
         self.statusbar.showMessage(self.get_current_image_id())
 
@@ -333,7 +332,7 @@ class WMainWindow(QtBaseClass, FormClass):
             QFileDialog.DontUseNativeDialog)
         self.image_folder_selected.emit(os.path.abspath(folder))
 
-    @pyqtSlot(int)
+    @Slot(int)
     def open_file_dialog(self, flag: DataFileType) -> None:
         path = ''
         if DataFileType.IMAGE & flag:
@@ -367,7 +366,7 @@ class WMainWindow(QtBaseClass, FormClass):
         if path:
             self.files_selected.emit(path, flag)
 
-    @pyqtSlot(str, int)
+    @Slot(str, int)
     def load_files(self, path: str, flag: int) -> None:
         print('loading files')
         print('flag: {!s:}'.format(flag))
@@ -447,10 +446,10 @@ class WMainWindow(QtBaseClass, FormClass):
             tf_registry = AnnotationRegistry.from_tfrecord(
                 filename, MachineLearningMode.INFERENCE, user=current_user,
                 confidence=current_confidence)
-            print(list(tf_registry.image_ids))
+            # print(list(tf_registry.image_ids))
             image_ids = set(self.image_registry.image_ids)
             image_ids.intersection_update(tf_registry.image_ids)
-            print('image IDs: {}'.format(image_ids))
+            # print('image IDs: {}'.format(image_ids))
             for image_id in image_ids:
                 annotation = tf_registry.get_annotation(image_id)
                 self.annotation_registry.update_annotation(image_id,
@@ -459,7 +458,7 @@ class WMainWindow(QtBaseClass, FormClass):
             raise RuntimeError(
                 'Cannot add annotations before adding an ImageRegistry.')
 
-    @pyqtSlot(int)
+    @Slot(int)
     def save(self, flag: DataFileType):
         try:
             if flag & DataFileType.JSON:
@@ -520,7 +519,7 @@ class WMainWindow(QtBaseClass, FormClass):
         else:
             return default_human_user_id
 
-    @pyqtSlot()
+    @Slot()
     def _reset_scrollbar(self):
         self.scrollbar.setEnabled(True)
         self.scrollbar.setMaximum(len(self.image_registry) - 1)
@@ -536,13 +535,13 @@ class WMainWindow(QtBaseClass, FormClass):
         self._error_message_box.set_traceback(traceback)
         self._error_message_box.exec()
 
-    @pyqtSlot()
+    @Slot()
     def set_bounding_box_color(self):
         color = QColorDialog.getColor(options=QColorDialog.ShowAlphaChannel |
                                       QColorDialog.DontUseNativeDialog)
         self.scene.set_box_color(color)
 
-    @pyqtSlot(list)
+    @Slot(list)
     def _enable_enter_button(self, buttons: List[QAbstractButton]):
         """
         Enables the "ENTER" button, which writes the bounding box data to the
@@ -550,7 +549,7 @@ class WMainWindow(QtBaseClass, FormClass):
         """
         self.button_enter.setEnabled(bool(buttons))
 
-    @pyqtSlot(int)
+    @Slot(int)
     def display_image(self, index: int) -> None:
         """
         Display image corresponding to filename in position 'index' in
@@ -561,7 +560,7 @@ class WMainWindow(QtBaseClass, FormClass):
             image_array = np.asarray(image_file_handle)
         self.scene.set_pixmap(image_array, rescale=False)
 
-    @pyqtSlot(int)
+    @Slot(int)
     def display_bounding_boxes(self, index: int) -> None:
         """
         Shows the bounding boxes in the Scene associated with image_id
@@ -569,6 +568,9 @@ class WMainWindow(QtBaseClass, FormClass):
         print('displaying bounding boxes at index = {}'.format(index))
         if self.annotation_registry is not None:
             image_id: str = self.image_registry.get_image_id_by_index(index)
+            # TODO: hide iterates through all the bounding boxes and executes
+            # their setVisible(False) method. to improve performance we can
+            # track the state of shown and hidden bounding boxes.
             self.scene.hide()
             self.scene.show(image_id)
 
@@ -577,15 +579,15 @@ class WMainWindow(QtBaseClass, FormClass):
         Convenience method for updating the AnnotationRegistry's members with
         values from the GraphicsItems.
         """
-        print('image_id: {}'.format(image_id))
+        print('updating image_id: {}'.format(image_id))
         group: WGraphicsItemGroup = self.scene.groups[image_id]
         updated_bounding_boxes: List[BoundingBoxParameter] = \
             [bbox.parameter for bbox in group]
         for param in updated_bounding_boxes:
             param.set_state(self.get_user_id(), True)
-        self.annotation_registry.bounding_boxes = updated_bounding_boxes
-        # self.annotation_registry.update_annotation(
-        #     image_id, {'bounding_boxes': updated_bounding_boxes})
+        # self.annotation_registry.bounding_boxes = updated_bounding_boxes
+        self.annotation_registry.update_annotation(
+            image_id, {'bounding_boxes': updated_bounding_boxes})
 
-        print('after')
-        print(self.annotation_registry.get_annotation(image_id))
+        # print('after')
+        # print(self.annotation_registry.get_annotation(image_id))

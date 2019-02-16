@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
-from PyQt5.QtWidgets import QApplication
+from qtpy.QtWidgets import QApplication
 
 
 from vslearn.main_window import WMainWindow

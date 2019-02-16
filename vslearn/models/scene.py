@@ -2,11 +2,11 @@
 from collections import OrderedDict
 import dataclasses
 import numpy as np
-from PyQt5.QtWidgets import (
+from qtpy.QtWidgets import (
     QGraphicsScene, QGraphicsPixmapItem, QGraphicsRectItem,
     QGraphicsSceneMouseEvent)
-from PyQt5.QtCore import pyqtProperty, QPointF, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QColor, QImage, QPen, QPixmap
+from qtpy.QtCore import Property, QPointF, Qt, Signal, Slot
+from qtpy.QtGui import QColor, QImage, QPen, QPixmap
 from typing import Dict, Optional
 
 from .bounding_box import WBoundingBoxGraphicsItem, BoundingBoxParameter
@@ -50,7 +50,7 @@ class WGraphicsItemGroup(QGraphicsRectItem):
 
 class WGraphicsScene(QGraphicsScene):
     default_image = np.random.randint(0, 256, (512, 512), dtype=np.uint8)
-    pixmap_changed = pyqtSignal(int)
+    pixmap_changed = Signal(int)
     default_bounding_box_pen = QPen(Qt.black)
     default_bounding_box_pen.setWidth(2)
 
@@ -74,13 +74,13 @@ class WGraphicsScene(QGraphicsScene):
         pass
         # self.data_about_to_reset.connect(self._remove_all_items)
 
-    @pyqtSlot()
+    @Slot()
     def _remove_all_graphics_items(self) -> None:
         for group in self.groups.values():
             self.removeItem(group)
         self.groups = OrderedDict()
 
-    @pyqtSlot()
+    @Slot()
     def reset_images(self) -> None:
         """
         Also resets the bounding boxes.
@@ -89,7 +89,7 @@ class WGraphicsScene(QGraphicsScene):
         self._display_default_image()
         print('images reset')
 
-    @pyqtSlot()
+    @Slot()
     def reset_bounding_boxes(self) -> None:
         self._remove_all_graphics_items()
 
@@ -142,14 +142,12 @@ class WGraphicsScene(QGraphicsScene):
         group = self.groups[group_name]
         bbox.setParentItem(group)
         bbox.setPen(self._box_pen)
-        # bbox.setVisible(True)
-        # print(bbox)
 
-    @pyqtProperty(QPen)
+    @Property(QPen)
     def box_pen(self) -> QPen:
         return self._box_pen
 
-    @pyqtProperty(int)
+    @Property(int)
     def box_line_width(self) -> int:
         return self._box_pen.width()
 
@@ -166,7 +164,7 @@ class WGraphicsScene(QGraphicsScene):
         self._box_pen.setColor(color)
         self._apply_new_pen()
 
-    @pyqtProperty('QPixmap')
+    @Property('QPixmap')
     def pixmap(self) -> None:
         return self._pixmap
 
@@ -230,11 +228,11 @@ class WGraphicsScene(QGraphicsScene):
         qimage = QImage(array.data, height, width, format_)
         return QPixmap.fromImage(qimage)
 
-    @pyqtProperty(bool)
+    @Property(bool)
     def edit_mode(self):
         return self._edit_mode
 
-    @pyqtSlot(str, bool)
+    @Slot(str, bool)
     def set_edit_mode(self, image_id: str, edit: bool):
         # print('setting edit mode to: {}'.format(edit))
         if edit is not self._edit_mode:
@@ -246,11 +244,11 @@ class WGraphicsScene(QGraphicsScene):
         else:
             raise ValueError('{} not a valid image'.format(image_id))
 
-    @pyqtProperty(bool)
+    @Property(bool)
     def drawing_mode(self) -> bool:
         return self._drawing_mode and self._edit_mode
 
-    @pyqtSlot(bool)
+    @Slot(bool)
     def set_drawing_mode(self, draw: bool):
         self._drawing_mode = draw
 
@@ -262,9 +260,7 @@ class WGraphicsScene(QGraphicsScene):
         return 'pill'
 
     def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent):
-        print('releasing')
         if self._temp_bbox and event.button() == Qt.LeftButton:
-            print(self._temp_bbox)
             # get updated parameters
             pos = event.scenePos()
             xmax = round(pos.x())
@@ -293,11 +289,8 @@ class WGraphicsScene(QGraphicsScene):
             rect = self._temp_bbox.rect()
             pos = event.scenePos()
             delta = pos - self._start_drag
-            # print('delta: {}'.format(delta))
-            # print('moving: {}'.format(rect))
             rect.setWidth(delta.x())
             rect.setHeight(delta.y())
-            # print('adjusted: {}'.format(rect))
             self._temp_bbox.setRect(rect)
         else:
             super().mouseMoveEvent(event)

@@ -1,3 +1,4 @@
-pyqt5>=5.9
-tensorflow>=1.12
-dataclasses
+pyside2>=5.6
+qtpy>=1.6
+tensorflow>=1.12, ==1.13.0rc2
+pillow

@@ -46,7 +46,7 @@ if __name__ == '__main__':
         packages=setuptools.find_packages(),
         version=current_version,
         ext_modules=[],
-        python_requires='==3.6.*',
+        python_requires='>=3.6.*',
         install_requires=get_requirements(),
         setup_requires=["pytest-runner"],
         tests_require=["pytest", "pytest-qt", "pytest-cov"],

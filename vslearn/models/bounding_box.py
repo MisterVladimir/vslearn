@@ -3,9 +3,9 @@ from collections import OrderedDict
 import dataclasses
 import datetime
 import numpy as np
-from PyQt5.QtCore import pyqtProperty, pyqtSlot, QPointF, Qt, QTimer
-from PyQt5.QtGui import QKeyEvent
-from PyQt5.QtWidgets import (
+from qtpy.QtCore import Property, Slot, QPointF, Qt, QTimer
+from qtpy.QtGui import QKeyEvent
+from qtpy.QtWidgets import (
     QGraphicsItem, QGraphicsRectItem, QGraphicsSceneMouseEvent)
 from typing import Any, List, Optional, Union
 
@@ -89,11 +89,11 @@ class WBoundingBoxGraphicsItem(QGraphicsRectItem):
         self.setFlag(QGraphicsRectItem.ItemIsFocusable, True)
         self.setFlag(QGraphicsRectItem.ItemIsSelectable, True)
 
-    @pyqtProperty(str)
+    @Property(str)
     def image_id(self) -> str:
         return self.parameter.image_id
 
-    @pyqtProperty(int)
+    @Property(int)
     def index(self) -> int:
         return self.parameter.index
 
@@ -114,7 +114,7 @@ class WBoundingBoxGraphicsItem(QGraphicsRectItem):
         super().setVisible(False)
         super().setEnabled(False)
 
-    @pyqtProperty(bool)
+    @Property(bool)
     def editable(self) -> bool:
         return bool(self._edit_mode) and self._editable
 
@@ -122,7 +122,7 @@ class WBoundingBoxGraphicsItem(QGraphicsRectItem):
     # def editable(self, edit: bool):
     #     raise NotImplementedError('Use the "set_editable" methods instead.')
 
-    @pyqtSlot(bool)
+    @Slot(bool)
     def set_editable(self, edit: bool):
         """
         When a WBoundingBoxGraphicsItem is moved or otherwise edited,
@@ -147,7 +147,7 @@ class WBoundingBoxGraphicsItem(QGraphicsRectItem):
         else:
             return [rect.left(), rect.top(), rect.right(), rect.bottom()]
 
-    @pyqtSlot()
+    @Slot()
     def _move_by_keys(self):
         i = 2
         direction_to_args = {Direction.UP: QPointF(0, -i),
@@ -160,7 +160,7 @@ class WBoundingBoxGraphicsItem(QGraphicsRectItem):
             pos = self.pos()
             self.setPos(pos + delta)
 
-    @pyqtProperty(int)
+    @Property(int)
     def stretch_modifier(self):
         return self._stretch_modifier
 
@@ -281,8 +281,6 @@ class BoundingBoxParameter(object):
 
     ymax : Union[int, float]
         y coordinate of the bottom right hand corner.
-
-
 
     image_id: str
         'image_id' and 'index' (see below) together form the bounding box's ID.
