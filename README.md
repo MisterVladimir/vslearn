@@ -10,9 +10,18 @@ Introduction
 *vslearn* is an image annotation tool that helps non-technical folks generate ground truth bounding boxes used in training neural networks. Basically: (1) humans draw bounding boxes around objects of interest and (2) feed the images + bounding boxes into a neural net so it can learn to predict bounding boxes around similar objects. I created this product as part of my [Insight Data Science](https://www.insightdatascience.com/) project consulting for [WellthApp](https://wellthapp.com/home).
 
 
-Installation
+Installing & Running
 ------------------
-Only installation from source is available right now.
+Please clone from source by issuing the following shell commands:  
+> git clone https://github.com/MisterVladimir/vslearn.git
+> cd vslearn
+> pip install .
+
+To run, navigate to the folder in which vslearn is installed, and run  
+> python main.py
+
+
+*vslearn* has only been tested on Ubuntu 18.04. However, *vslearn* is built with the multi-platform framework, Qt, so there's a good chance *vslearn* is also platform-independent. To help enable multi-platform support, please note your operating system when raising issues.
 
 
 Test
@@ -25,7 +34,7 @@ Requirements
 ------------------
 pyside2  
 tensorflow  
-dataclasses
+pillow  
 
 
 License
