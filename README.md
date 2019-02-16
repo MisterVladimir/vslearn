@@ -13,12 +13,12 @@ Introduction
 Installing & Running
 ------------------
 Please clone from source by issuing the following shell commands:  
-> git clone https://github.com/MisterVladimir/vslearn.git
-> cd vslearn
-> pip install .
+> git clone https://github.com/MisterVladimir/vslearn.git  
+> cd vslearn  
+> pip install .  
 
 To run, navigate to the folder in which vslearn is installed, and run  
-> python main.py
+> python main.py  
 
 
 *vslearn* has only been tested on Ubuntu 18.04. However, *vslearn* is built with the multi-platform framework, Qt, so there's a good chance *vslearn* is also platform-independent. To help enable multi-platform support, please note your operating system when raising issues.
