@@ -38,7 +38,6 @@ def get_requirements():
 
 
 if __name__ == '__main__':
-    from setuptools import find_packages
     current_version = str(VERSION)
     url = r'https://github.com/MisterVladimir/vslearn'
     setuptools.setup(
