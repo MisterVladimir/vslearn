@@ -137,4 +137,4 @@ CLASS_TEXT_TO_INT: Dict[str, int] = {
     'pill': 1, 'not_pill': 2}
 CLASS_INT_TO_TEXT: Dict[int, str] = {
     v: k for k, v in CLASS_TEXT_TO_INT.items()}
-VERSION: Version = Version(major=0, minor=0, micro=1)
+VERSION: Version = Version(major=0, minor=0, micro=3)

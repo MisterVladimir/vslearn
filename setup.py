@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 import os
 import setuptools
+from typing import List
 
 from vslearn import VERSION
 
@@ -31,7 +32,7 @@ def get_readme() -> str:
         return f.read()
 
 
-def get_requirements():
+def get_requirements() -> List[str]:
     with open('requirements.txt', 'r') as f:
         raw = f.read().replace(' ', '')
         return raw.split('\n')
@@ -53,7 +54,7 @@ if __name__ == '__main__':
         author='Vladimir Shteyn',
         author_email='vladimir@shteyn.net',
         url=url,
-        download_url=r'{0}/archive/{1}.tar.gz'.format(url, current_version),
+        download_url='{}/archive/{}.tar.gz'.format(url, current_version),
         long_description=get_readme(),
         long_description_content_type='text/markdown',
         license="GNUv3",

@@ -1,3 +1,5 @@
 {
-    "python.pythonPath": "/home/vladimir/anaconda3/envs/wellth/bin/python"
+    "python.pythonPath": "/home/vladimir/anaconda3/envs/wellth/bin/python",
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true
 }
