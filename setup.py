@@ -18,12 +18,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-from setuptools import setup
+import os
+import setuptools
+
 from vslearn import VERSION
 
 
-with open('README.md', 'r') as f:
-    README = f.read()
+def get_readme() -> str:
+    readme_filename = os.path.join(os.path.dirname(
+        os.path.abspath(__file__)), 'README.md')
+    with open(readme_filename, 'r') as f:
+        return f.read()
 
 
 def get_requirements():
@@ -36,23 +41,28 @@ if __name__ == '__main__':
     from setuptools import find_packages
     current_version = str(VERSION)
     url = r'https://github.com/MisterVladimir/vslearn'
-    setup(name='vslearn',
-          packages=find_packages(),
-          version=current_version,
-          ext_modules=[],
-          python_requires='==3.6.*',
-          install_requires=get_requirements(),
-          setup_requires=["pytest-runner"],
-          tests_require=["pytest", "pytest-qt", "pytest-cov"],
-          include_package_data=True,
-          author='Vladimir Shteyn',
-          author_email='vladimir@shteyn.net',
-          url=url,
-          download_url=r'{0}/archive/{1}.tar.gz'.format(url, current_version),
-          long_description=README,
-          license="GNUv3",
-          classifiers=[
-              'Intended Audience :: Science/Research',
-              'Topic :: Scientific/Engineering :: Medical Science Apps.',
-              'Topic :: Scientific/Engineering :: Image Recognition',
-              'Programming Language :: Python :: 3.6'])
+    setuptools.setup(
+        name='vslearn',
+        packages=setuptools.find_packages(),
+        version=current_version,
+        ext_modules=[],
+        python_requires='==3.6.*',
+        install_requires=get_requirements(),
+        setup_requires=["pytest-runner"],
+        tests_require=["pytest", "pytest-qt", "pytest-cov"],
+        include_package_data=True,
+        author='Vladimir Shteyn',
+        author_email='vladimir@shteyn.net',
+        url=url,
+        download_url=r'{0}/archive/{1}.tar.gz'.format(url, current_version),
+        long_description=get_readme(),
+        long_description_content_type='text/markdown',
+        license="GNUv3",
+        classifiers=[
+            'Intended Audience :: Science/Research',
+            'Development Status :: 3 - Alpha',
+            'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+            'Topic :: Scientific/Engineering :: Medical Science Apps.',
+            'Topic :: Scientific/Engineering :: Visualization',
+            'Topic :: Scientific/Engineering :: Image Recognition',
+            'Programming Language :: Python :: 3.6'])
