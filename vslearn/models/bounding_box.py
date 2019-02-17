@@ -89,8 +89,7 @@ class WBoundingBoxGraphicsItem(QGraphicsRectItem):
         self.setFlag(QGraphicsRectItem.ItemIsFocusable, True)
         self.setFlag(QGraphicsRectItem.ItemIsSelectable, True)
 
-    @Property(str)
-    def image_id(self) -> str:
+    def get_image_id(self) -> str:
         return self.parameter.image_id
 
     @Property(int)

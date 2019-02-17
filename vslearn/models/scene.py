@@ -133,7 +133,7 @@ class WGraphicsScene(QGraphicsScene):
     def add_bounding_box(self, bbox: WBoundingBoxGraphicsItem) -> None:
         """
         """
-        group_name = bbox.image_id
+        group_name = bbox.get_image_id()
         if group_name not in self.groups:
             raise ValueError(
                 'GraphicsItemGroup associated with image ID ' +

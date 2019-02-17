@@ -47,14 +47,9 @@ warning.py
     avoid glossing over bugs.
 """
 import os
-from qtpy.uic import loadUiType as _loadUiType
 from typing import Any, Dict, Iterable, List, NamedTuple
 
 from .enums import MachineLearningMode
-
-
-def loadUiType(filename: str):
-    return _loadUiType(filename, from_imports=True, import_from='vslearn')
 
 
 class Version(NamedTuple):

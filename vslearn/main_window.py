@@ -7,10 +7,11 @@ from typing import List, Optional, Tuple
 import numpy as np
 from PIL import Image
 from qtpy.QtWidgets import (
-    QAbstractButton, QButtonGroup, QColorDialog, QFileDialog, QGraphicsView)
+    QAbstractButton, QButtonGroup, QColorDialog, QFileDialog, QGraphicsView,
+    QMainWindow)
 from qtpy.QtCore import QObject, Signal, Slot
 
-from . import UI_DIR, loadUiType
+from . import UI_DIR
 from .enums import DataFileType, MachineLearningMode, UserType
 from .input_output import WRecordWriter
 from .models.scene import WGraphicsItemGroup, WGraphicsScene
@@ -18,10 +19,8 @@ from .models.bounding_box import UserID, BoundingBoxParameter
 from .registry import (
     AnnotationRegistry, ImagePathRegistry, annotation_registry_from_labelImg,
     default_human_user_id)
+from .ui.ui_main_window import Ui_MainWindow
 from .warning import WWarningMessageBox, WErrorMessageBox
-
-main_window_filename = os.path.join(UI_DIR, 'main_window.ui')
-FormClass, QtBaseClass = loadUiType(main_window_filename)
 
 
 class WButtonGroup(QButtonGroup):
@@ -75,7 +74,7 @@ class WButtonGroup(QButtonGroup):
             self._checked.append(button)
 
     def _signals_setup(self) -> None:
-        self.pyqtConfigure(buttonClicked=self._update_buttons)
+        self.buttonClicked.connect(self._update_buttons)
 
     def setExclusive(self, exclusive: bool) -> None:
         # override base class method
@@ -144,7 +143,7 @@ class WButtonGroup(QButtonGroup):
                 [b for b in self.buttons() if b.isChecked()])
 
 
-class WMainWindow(QtBaseClass, FormClass):
+class WMainWindow(QMainWindow, Ui_MainWindow):
     # 'selected' means the user has chosen that item/category from
     # an QFileDialog
     files_selected = Signal(str, int)
@@ -182,13 +181,6 @@ class WMainWindow(QtBaseClass, FormClass):
         # model for the QGraphicsView
         self.scene = WGraphicsScene(parent=self)
         self.graphics_view.setScene(self.scene)
-
-        # QFileDialogs for opening images and bounding box data
-        self._image_file_dialog = QFileDialog(self)
-        self._image_file_dialog.setFileMode(QFileDialog.ExistingFile)
-
-        self._bounding_box_dialog_xml = QFileDialog(self)
-        self._bounding_box_dialog_xml.setFileMode(QFileDialog.DirectoryOnly)
 
         # checkmark and X buttons
         # these buttons mark the image as correctly or incorrectly segmented,
@@ -232,7 +224,8 @@ class WMainWindow(QtBaseClass, FormClass):
         self.action_to_JSON.triggered.connect(
             lambda: self.save(DataFileType.JSON))
         # File -> Export to... -> TFRecord
-        self.action_to_tfrecord.triggered.connect(self._save_as_tfrecord)
+        self.action_to_tfrecord.triggered.connect(
+            lambda: self.save(DataFileType.TFRECORD))
 
         # zoom buttons signals
         self.button_resize.clicked.connect(self.graphics_view.fit_to_window)
@@ -475,6 +468,7 @@ class WMainWindow(QtBaseClass, FormClass):
         filename = QFileDialog.getSaveFileName(
             self, 'Save as JSON...', filter=self.tr("JSON Files (*.json)"))
         as_string = self.annotation_registry.dumps_to_json(indent=4)
+        print('saving as: {}'.format(filename))
         with open(filename[0], 'w') as f:
             f.write(as_string)
 
@@ -501,7 +495,6 @@ class WMainWindow(QtBaseClass, FormClass):
                 self.progress_bar.setValue(i)
 
         self.progress_bar.setValue(0)
-
 
     def get_current_image_id(self) -> str:
         if self.image_registry is None:
