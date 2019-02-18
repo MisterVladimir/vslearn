@@ -539,9 +539,11 @@ class WMainWindow(QMainWindow, Ui_MainWindow):
 
     @Slot()
     def set_bounding_box_color(self):
-        color = QColorDialog.getColor(options=QColorDialog.ShowAlphaChannel |
+        color = QColorDialog.getColor(parent=self,
+                                      options=QColorDialog.ShowAlphaChannel |
                                       QColorDialog.DontUseNativeDialog)
-        self.scene.set_box_color(color)
+        if color:
+            self.scene.set_box_color(color)
 
     @Slot(list)
     def _enable_enter_button(self, buttons: List[QAbstractButton]):
