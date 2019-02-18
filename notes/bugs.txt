@@ -16,3 +16,5 @@
 
 2) If we draw a large bounding box over a smaller one, the smaller one becomes
    impossible to select unless the larger one is moved out of the way first.
+
+3) Importing from JSON displays deleted bounding boxes.

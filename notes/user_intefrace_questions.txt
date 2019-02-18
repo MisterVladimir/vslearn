@@ -1,8 +1,13 @@
 
 
 1) Suppose the user has loaded images into the viewer. Will the annotations
-   (i.e. bounding boxes) for these images ever be loaded piecemeal? That is, will
-   the user load bounding boxes from one file, and then want to load bounding
-   boxes from another file?
+   (i.e. bounding boxes) for these images ever be loaded piecemeal? That is,
+   will the user load bounding boxes from one file, and then want to load
+   bounding boxes from another file?
 
-2) 
+2) It would be nice if the user could import training images and associated
+   bounding boxes stored in a Tensorflow Record. However, this might complicate
+   the user interface. How's that? Users can already import inference data
+   stored in a Tensorflow Record by doing File -> Import from... -> Tensorflow
+   Record. How (and should) we allow the user to signal they're importing
+   training data?
