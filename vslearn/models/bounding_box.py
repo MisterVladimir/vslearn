@@ -3,14 +3,14 @@ from collections import OrderedDict
 import dataclasses
 import datetime
 import numpy as np
-from qtpy.QtCore import Property, Slot, QPointF, Qt, QTimer
+from qtpy.QtCore import Property, QPointF, QRectF, Qt, QTimer, Slot
 from qtpy.QtGui import QKeyEvent
 from qtpy.QtWidgets import (
     QGraphicsItem, QGraphicsRectItem, QGraphicsSceneMouseEvent)
-from typing import Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from ..enums import (
-    UserType, AnnotationCheckedState, BoxEditMode, Direction)
+    BoxCorner, UserType, AnnotationCheckedState, BoxEditMode, Direction)
 
 
 @dataclasses.dataclass
@@ -57,11 +57,7 @@ class WBoundingBoxGraphicsItem(QGraphicsRectItem):
     """
     # how sensitive this item is to user input; i.e. how quickly is this Item
     # translated if they user holds down a keyboard arrow button
-    sensitivity: int = 5
-    arrow_keys: List[int] = [Qt.Key_Up, Qt.Key_Down, Qt.Key_Left, Qt.Key_Right]
-    directions: List[Direction] = [Direction.UP, Direction.DOWN,
-                                   Direction.LEFT, Direction.RIGHT]
-    key_to_direction = dict(zip(arrow_keys, directions))
+    sensitivity: int = 3
 
     def __init__(self, parameter: 'BoundingBoxParameter',
                  parent: Optional['QGraphicsItem'] = None):
@@ -69,25 +65,37 @@ class WBoundingBoxGraphicsItem(QGraphicsRectItem):
         width, height = parameter.get_width(), parameter.get_height()
         super().__init__(x, y, width, height, parent)
         self.parameter = parameter
-        self._stretch_modifier = Qt.ShiftModifier
         self._set_default_flags()
         self.set_editable(False)
         self._setup()
-        self._signals_setup()
 
     def _setup(self):
         self.setAcceptedMouseButtons(Qt.LeftButton)
-        self._keyboard_timer = QTimer()
-        self._keyboard_timer.setInterval(5. / self.sensitivity)
-        self._edit_mode = BoxEditMode.NONE
-        self._direction = Direction.NONE
+        # self._edit_mode: BoxEditMode = BoxEditMode.NONE
+        # self._direction: BoxEditMode = Direction.NONE
 
-    def _signals_setup(self):
-        pass
-
-    def _set_default_flags(self):
-        self.setFlag(QGraphicsRectItem.ItemIsFocusable, True)
+    def _set_default_flags(self) -> None:
+        self.setFlag(QGraphicsRectItem.ItemIsFocusable, False)
         self.setFlag(QGraphicsRectItem.ItemIsSelectable, True)
+
+    def _set_editable_flags(self, edit: bool) -> None:
+        flags = (QGraphicsRectItem.ItemIsMovable,
+                 QGraphicsRectItem.ItemSendsGeometryChanges,
+                 QGraphicsRectItem.ItemSendsScenePositionChanges)
+        for flag in flags:
+            self.setFlag(flag, edit)
+
+    @Property(bool)
+    def editable(self) -> bool:
+        return self._editable
+
+    @Slot(bool)
+    def set_editable(self, edit: bool) -> None:
+        """
+        When a WBoundingBoxGraphicsItem is moved or otherwise edited,
+        """
+        self._editable = edit
+        self._set_editable_flags(edit)
 
     def get_image_id(self) -> str:
         return self.parameter.image_id
@@ -113,26 +121,6 @@ class WBoundingBoxGraphicsItem(QGraphicsRectItem):
         super().setVisible(False)
         super().setEnabled(False)
 
-    @Property(bool)
-    def editable(self) -> bool:
-        return bool(self._edit_mode) and self._editable
-
-    # @editable.setter
-    # def editable(self, edit: bool):
-    #     raise NotImplementedError('Use the "set_editable" methods instead.')
-
-    @Slot(bool)
-    def set_editable(self, edit: bool):
-        """
-        When a WBoundingBoxGraphicsItem is moved or otherwise edited,
-        """
-        self._editable = edit
-        flags = (QGraphicsRectItem.ItemIsMovable,
-                 QGraphicsRectItem.ItemSendsGeometryChanges,
-                 QGraphicsRectItem.ItemSendsScenePositionChanges)
-        for flag in flags:
-            self.setFlag(flag, edit)
-
     def _get_rect_params(self, wh: bool = True) -> List[float]:
         """
         wh: bool
@@ -140,59 +128,20 @@ class WBoundingBoxGraphicsItem(QGraphicsRectItem):
             (x, y) coordinates of top left and bottom right corners as a four-
             member tuple.
         """
-        rect = self.mapToScene(self.rect()).boundingRect()
+        rect: QRectF = self.mapToScene(self.rect()).boundingRect()
         if wh:
             return [rect.left(), rect.top(), rect.width(), rect.height()]
         else:
             return [rect.left(), rect.top(), rect.right(), rect.bottom()]
 
-    @Slot()
-    def _move_by_keys(self):
-        i = 2
-        direction_to_args = {Direction.UP: QPointF(0, -i),
-                             Direction.DOWN: QPointF(0, i),
-                             Direction.LEFT: QPointF(-i, 0),
-                             Direction.RIGHT: QPointF(i, 0)}
-
-        if self._edit_mode | BoxEditMode.TRANSLATE:
-            delta = direction_to_args[self._direction]
-            pos = self.pos()
-            self.setPos(pos + delta)
-
-    @Property(int)
-    def stretch_modifier(self):
-        return self._stretch_modifier
-
-    def set_stretch_modifier(self, modifier: int):
-        self._stretch_modifier = modifier
-
-    def keyPressEvent(self, event: QKeyEvent):
-        # determine whether one of the arrow keys were pressed
-        if event.key() in self.arrow_keys:
-            # determine whether the SHIFT button is pressed down concurrently
-            if event.modifiers() == self._stretch_modifier:
-                self._edit_mode |= BoxEditMode.STRETCH
-            else:
-                self._edit_mode |= BoxEditMode.TRANSLATE
-
-            self._direction = self.key_to_direction[event.key()]
-            self._move_by_keys()
-            self._keyboard_timer.start()
-        elif event.key() == Qt.Key_Delete:
-            self.delete()
-
-    def keyReleaseEvent(self, event: QKeyEvent):
+    def _get_corner(self,
+                    pos: QPointF,
+                    rect: QRectF,
+                    max_distance: Optional[float] = None
+                    ) -> Optional[BoxCorner]:
         """
-        Stops the self._keyboard_timer and notifies the scene's model that this
-        WBoundingBoxGraphicsItem has been stretched or TRANSLATEd.
-        """
-        if event.key() in self.arrow_keys:
-            self._keyboard_timer.stop()
-
-    def wheelEvent(self, event: QGraphicsSceneMouseEvent):
-        """
-        Stretch the rectangle with the mouse wheel. This works by first
-        subdividing bounding box into the following ninths
+        Which corner or edge of `rect` is `pos` closest to? First subdivide
+        `rect` into the following ninths
 
         -------------------------
         |   1   |   2   |   3   |
@@ -202,51 +151,76 @@ class WBoundingBoxGraphicsItem(QGraphicsRectItem):
         |   7   |   8   |   9   |
         -------------------------
 
-        and then stretching the box's corner coordinates inwards or outwards
-        depending on which way the mouse wheel was rolled.
+        Then determine the distance between `pos` and the centroid of each
+        ninth. Return the BoxCorner enum associated with the smallest distance.
+
+        Parameters
+        ------------
+        max_distance : Optional[float]
+            Optional maximal distance between pos and a rectangle corner for
+            which to return a value.
         """
-        if not self.isSelected():
-            super().wheelEvent(event)
+        topleft: QPointF = rect.topLeft()
+        dx: QPointF = QPointF(rect.width(), 0)
+        dy: QPointF = QPointF(0, rect.height())
+
+        ninths: Dict[BoxCorner, QPointF] = OrderedDict([
+            (BoxCorner.TOP | BoxCorner.LEFT, topleft + dx/6 + dy/6),
+            (BoxCorner.TOP | BoxCorner.MIDDLE, topleft + dx/2 + dy/6),
+            (BoxCorner.TOP | BoxCorner.RIGHT, topleft + 5*dx/6 + dy/6),
+            (BoxCorner.MIDDLE | BoxCorner.LEFT, topleft + dx/6 + dy/2),
+            (BoxCorner.MIDDLE, topleft + dx/2 + dy/2),
+            (BoxCorner.MIDDLE | BoxCorner.RIGHT, topleft + 5*dx/6 + dy/2),
+            (BoxCorner.BOTTOM | BoxCorner.LEFT, topleft + dx/6 + 5*dy/6),
+            (BoxCorner.BOTTOM | BoxCorner.MIDDLE, topleft + dx/2 + 5*dy/6),
+            (BoxCorner.BOTTOM | BoxCorner.RIGHT, topleft + 5*dx/6 + 5*dy/6)])
+
+        distances: List[float] = [
+            (pos - p).manhattanLength() for p in ninths.values()]
+        if max_distance is not None and min(distances) > max_distance:
             return None
-        # event.accept()
-        # find ninth closest to mouse cursor location
-        pos = event.pos()
-        rect = self.rect()
-        topleft = rect.topLeft()
-        width = rect.width()
-        height = rect.height()
-        dx = QPointF(rect.width(), 0)
-        dy = QPointF(0, rect.height())
+        else:
+            corners: List[BoxCorner] = list(ninths.keys())
+            min_distance_index: int = np.argmin(distances)
+            return corners[min_distance_index]
 
-        ninths = OrderedDict([
-            (1, topleft + dx/6 + dy/6),
-            (2, topleft + dx/2 + dy/6),
-            (3, topleft + 5*dx/6 + dy/6),
-            (4, topleft + dx/6 + dy/2),
-            (5, topleft + dx/2 + dy/2),
-            (6, topleft + 5*dx/6 + dy/2),
-            (7, topleft + dx/6 + 5*dy/6),
-            (8, topleft + dx/2 + 5*dy/6),
-            (9, topleft + 5*dx/6 + 5*dy/6)])
+    def wheelEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        """
+        Stretch the rectangle with the mouse wheel depending on where in the
+        bounding box the mouse pointer is located and which way the mouse wheel
+        is rolled.
+        """
+        if self._editable and self.isSelected():
+            # find ninth closest to mouse cursor location
+            pos = event.pos()
+            rect = self.rect()
+            corner = self._get_corner(pos, rect)
 
-        distances = [(pos - p).manhattanLength() for p in ninths.values()]
-        corner = list(ninths.keys())[np.argmin(distances)]
-        factor = (width + height) * event.delta() / 6000
-        if corner in [1, 2, 3]:
-            rect.setTop(rect.y() - factor)
-        elif corner in [7, 8, 9]:
-            rect.setHeight(height + factor)
-        if corner in [1, 4, 7]:
-            rect.setLeft(rect.x() - factor)
-        elif corner in [3, 6, 9]:
-            rect.setWidth(width + factor)
-        elif corner == 5:
-            rect.setTop(rect.y() - factor / 2)
-            rect.setLeft(rect.x() - factor / 2)
-            rect.setHeight(height + factor)
-            rect.setWidth(width + factor)
+            width = rect.width()
+            height = rect.height()
+            factor = (width + height) * event.delta() / (self.sensitivity * 2000)
+            if corner & BoxCorner.TOP:
+                rect.setTop(rect.y() - factor)
+            elif corner & BoxCorner.BOTTOM:
+                rect.setHeight(height + factor)
+            if corner & BoxCorner.LEFT:
+                rect.setLeft(rect.x() - factor)
+            elif corner & BoxCorner.RIGHT:
+                rect.setWidth(width + factor)
+            elif corner == BoxCorner.MIDDLE:
+                rect.setTop(rect.y() - factor / 2)
+                rect.setLeft(rect.x() - factor / 2)
+                rect.setHeight(height + factor)
+                rect.setWidth(width + factor)
 
-        self.setRect(rect)
+            self.setRect(rect)
+        else:
+            super().wheelEvent(event)
+
+    def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
+        if event.button() == Qt.LeftButton:
+            self.update()
+        super().mousePressEvent(event)
 
     def itemChange(self, change: int, value: Any) -> Any:
         if change == QGraphicsItem.ItemPositionHasChanged:
@@ -257,9 +231,9 @@ class WBoundingBoxGraphicsItem(QGraphicsRectItem):
             self.parameter.ymax = round(ymax)
             # i think this will help remove weird graphics artifacts when
             # making the rect smaller?
-            width = self.parameter.get_width()
-            height = self.parameter.get_height()
-            self.scene().update(xmin - 5, ymin - 5, width + 10, height + 10)
+            # width = self.parameter.get_width()
+            # height = self.parameter.get_height()
+            # self.scene().update(xmin - 5, ymin - 5, width + 10, height + 10)
 
         return super().itemChange(change, value)
 

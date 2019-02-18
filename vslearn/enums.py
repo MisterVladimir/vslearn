@@ -20,17 +20,11 @@ class BoxCorner(IntFlag):
     """
     Describes corners (or center region) of the WBoundingBoxGraphicsItem.
     """
-    TOPLEFT = auto()
-    TOPRIGHT = auto()
-    BOTTOMRIGHT = auto()
-    BOTTOMLEFT = auto()
-    CENTER = auto()
-
-    LEFT = TOPLEFT | BOTTOMLEFT
-    RIGHT = TOPRIGHT | BOTTOMRIGHT
-
-    TOP = TOPLEFT | TOPRIGHT
-    BOTTOM = BOTTOMLEFT | BOTTOMRIGHT
+    TOP = auto()
+    BOTTOM = auto()
+    LEFT = auto()
+    RIGHT = auto()
+    MIDDLE = auto()
 
 
 class BoxEditMode(IntFlag):

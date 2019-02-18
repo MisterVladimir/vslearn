@@ -12,7 +12,8 @@ from qtpy.QtWidgets import (
 from qtpy.QtCore import QObject, Signal, Slot
 
 from . import UI_DIR
-from .enums import DataFileType, MachineLearningMode, UserType
+from .enums import (
+    AnnotationCheckedState, DataFileType, MachineLearningMode, UserType)
 from .input_output import WRecordWriter
 from .models.scene import WGraphicsItemGroup, WGraphicsScene
 from .models.bounding_box import UserID, BoundingBoxParameter
@@ -38,8 +39,6 @@ class WButtonGroup(QButtonGroup):
     exclusive: Tuple[int, int]
         Minimum and maximum number of buttons that can remain in the "checked"
         state at once.
-
-    BUG: individual buttons' toggled signals aren't being emitted???
     """
     def __init__(self, *buttons: QAbstractButton,
                  exclusive: Tuple[int, int] = (0, 1),
@@ -285,11 +284,14 @@ class WMainWindow(QMainWindow, Ui_MainWindow):
 
     @Slot(bool)
     def _set_edit_mode(self, edit: bool):
+        print('setting edit mode of image {} to {}'.format(self.get_current_image_id(), edit))
         self.scene.set_edit_mode(self.get_current_image_id(), edit)
 
     @Slot(list)
     def _set_edit_mode_from_button_list(self, buttons: List[QAbstractButton]):
+        print('button list check state changed')
         if self.button_reject in buttons:
+            print('reject button')
             self._set_edit_mode(True)
         else:
             self._set_edit_mode(False)
@@ -482,11 +484,18 @@ class WMainWindow(QMainWindow, Ui_MainWindow):
         with WRecordWriter(filename) as writer:
             for i, annotation in enumerate(
                     self.annotation_registry.annotations):
-                boxes: List[List[int]] = [
-                    [box.xmin, box.ymin, box.xmax, box.ymax]
-                    for box in annotation.bounding_boxes]
-                classes: List[int] = [
-                    box.label for box in annotation.bounding_boxes]
+                boxes, classes = zip(*[
+                    ([box.xmin, box.ymin, box.xmax, box.ymax], box.label)
+                    for box in annotation.bounding_boxes
+                    if not box.delete and (box.state &
+                                           AnnotationCheckedState.CORRECT)
+                ])
+                # equivalent to:
+                # boxes: List[List[int]] = [
+                #     [box.xmin, box.ymin, box.xmax, box.ymax]
+                #     for box in annotation.bounding_boxes if...]
+                # classes: List[str] = [
+                #     box.label for box in annotation.bounding_boxes if...]
                 image_filename: str = \
                     self.image_registry.get_filename_from_image_id(
                         annotation.image_id)

@@ -3,13 +3,12 @@
 # Form implementation generated from reading ui file '/home/vladimir/projects/insight/vslearn/vslearn/ui/main_window.ui',
 # licensing of '/home/vladimir/projects/insight/vslearn/vslearn/ui/main_window.ui' applies.
 #
-# Created: Sat Feb 16 18:52:49 2019
+# Created: Sun Feb 17 18:32:36 2019
 #      by: pyside2-uic  running on PySide2 5.12.1
 #
 # WARNING! All changes made in this file will be lost!
 
 from PySide2 import QtCore, QtGui, QtWidgets
-
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -149,6 +148,7 @@ class Ui_MainWindow(object):
         self.graphics_view.setDragMode(QtWidgets.QGraphicsView.RubberBandDrag)
         self.graphics_view.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
         self.graphics_view.setResizeAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
+        self.graphics_view.setViewportUpdateMode(QtWidgets.QGraphicsView.FullViewportUpdate)
         self.graphics_view.setObjectName("graphics_view")
         self.gridLayout.addWidget(self.graphics_view, 1, 1, 1, 1)
         self.progress_bar = QtWidgets.QProgressBar(self.centralwidget)

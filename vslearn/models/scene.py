@@ -6,11 +6,11 @@ from qtpy.QtWidgets import (
     QGraphicsScene, QGraphicsPixmapItem, QGraphicsRectItem,
     QGraphicsSceneMouseEvent)
 from qtpy.QtCore import Property, QPointF, Qt, Signal, Slot
-from qtpy.QtGui import QColor, QImage, QPen, QPixmap
-from typing import Dict, Optional
+from qtpy.QtGui import QColor, QImage, QKeyEvent, QPen, QPixmap
+from typing import Dict, List, Optional, Union
 
 from .bounding_box import WBoundingBoxGraphicsItem, BoundingBoxParameter
-from ..enums import AnnotationCheckedState
+from ..enums import AnnotationCheckedState, Direction
 
 
 class WGraphicsItemGroup(QGraphicsRectItem):
@@ -34,8 +34,13 @@ class WGraphicsItemGroup(QGraphicsRectItem):
         return len(self.childItems())
 
     def set_edit_mode(self, edit: bool):
-        self.setEnabled(edit)
+        print('group setting edit mode to: {}'.format(edit))
+        # self.setEnabled(edit)
         for child in self.childItems():
+            if isinstance(child, WBoundingBoxGraphicsItem):
+                print('index: {}'.format(child.parameter.index))
+                print('focus: {}'.format(child.hasFocus()))
+                print('selected: {}'.format(child.isSelected()))
             child.set_editable(edit)
 
     def is_dirty(self) -> bool:
@@ -51,8 +56,19 @@ class WGraphicsItemGroup(QGraphicsRectItem):
 class WGraphicsScene(QGraphicsScene):
     default_image = np.random.randint(0, 256, (512, 512), dtype=np.uint8)
     pixmap_changed = Signal(int)
-    default_bounding_box_pen = QPen(Qt.black)
-    default_bounding_box_pen.setWidth(2)
+    default_pen_width = 2
+    default_pen_color = Qt.black
+    sensitivity: int = 3
+    arrow_keys: List[int] = [Qt.Key_Up, Qt.Key_Down, Qt.Key_Left, Qt.Key_Right]
+    directions: List[Direction] = [Direction.UP, Direction.DOWN,
+                                   Direction.LEFT, Direction.RIGHT]
+    key_to_direction = dict(zip(arrow_keys, directions))
+    _direction_to_point: Dict[Direction, QPointF] = {
+        Direction.UP: QPointF(0, -1),
+        Direction.DOWN: QPointF(0, 1),
+        Direction.LEFT: QPointF(-1, 0),
+        Direction.RIGHT: QPointF(1, 0)
+    }
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -68,11 +84,18 @@ class WGraphicsScene(QGraphicsScene):
         self._current_image_id: Optional[str] = None
         self.groups: Dict[str, WGraphicsItemGroup] = OrderedDict()
         self._edit_mode: bool = False
-        self._box_pen: QPen = QPen(self.default_bounding_box_pen)
+        self._box_pen: QPen = self._make_default_pen(self.default_pen_color,
+                                                     self.default_pen_width)
 
     def _signals_setup(self) -> None:
         pass
         # self.data_about_to_reset.connect(self._remove_all_items)
+
+    @staticmethod
+    def _make_default_pen(color: Union[QColor, int], width: int) -> QPen:
+        pen = QPen(color)
+        pen.setWidth(width)
+        return pen
 
     @Slot()
     def _remove_all_graphics_items(self) -> None:
@@ -127,7 +150,7 @@ class WGraphicsScene(QGraphicsScene):
     def create_group(self, name: str):
         group = WGraphicsItemGroup(name, parent=self.pixmap)
         group.setVisible(False)
-        group.setEnabled(False)
+        # group.setEnabled(False)
         self.groups[name] = group
 
     def add_bounding_box(self, bbox: WBoundingBoxGraphicsItem) -> None:
@@ -234,11 +257,10 @@ class WGraphicsScene(QGraphicsScene):
 
     @Slot(str, bool)
     def set_edit_mode(self, image_id: str, edit: bool):
-        # print('setting edit mode to: {}'.format(edit))
-        if edit is not self._edit_mode:
-            self._edit_mode = edit
+        print('scene image ID: {}'.format(image_id))
+        print('scene setting edit mode to: {}'.format(edit))
         if image_id in self.groups:
-            print('item editing set to: {}'.format(edit))
+            self._edit_mode = edit
             group = self.groups[image_id]
             group.set_edit_mode(edit)
         else:
@@ -258,6 +280,29 @@ class WGraphicsScene(QGraphicsScene):
         selected by the user.
         """
         return 'pill'
+
+    def translate_bounding_box(
+            self, box: WBoundingBoxGraphicsItem, direction: Direction) -> None:
+        delta = self._direction_to_point[direction] * self.sensitivity
+        pos = box.pos()
+        box.setPos(pos + delta)
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        if self._edit_mode and not self._drawing_mode:
+            # determine whether one of the arrow keys were pressed
+            if event.key() in self.arrow_keys:
+                direction = self.key_to_direction[event.key()]
+                for box in self.selectedItems():
+                    self.translate_bounding_box(box, direction)
+            elif event.key() == Qt.Key_Delete:
+                for box in self.selectedItems():
+                    box.delete()
+                # without manually updating, the items don't appear deleted
+                self.update()
+            else:
+                super().keyPressEvent()
+        else:
+            super().keyPressEvent(event)
 
     def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent):
         if self._temp_bbox and event.button() == Qt.LeftButton:
