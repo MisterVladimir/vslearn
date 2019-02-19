@@ -11,3 +11,13 @@
    stored in a Tensorflow Record by doing File -> Import from... -> Tensorflow
    Record. How (and should) we allow the user to signal they're importing
    training data?
+
+3) When exporting data to Tensorflow Record, the user should be able to select
+   which of the following subsets of images/bounding boxes is actually
+   exported.
+        
+       (a) Only images/bounding boxes that have been reviewed by the
+           user. (default)
+       (b) All bounding boxes.
+
+   Currently we do (b), which is probably not a good idea.

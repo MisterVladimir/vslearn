@@ -23,8 +23,10 @@ promoted.py
 
 
 registry.py
-    Data structures for holding an application instance's data, e.g. image
-    filenames. See also vslearn.models.bounding_box.
+    Data structures for tracking the application data, e.g. image filenames.
+    This is essentially a poor man's database, which associates images with
+    their bounding boxes.
+    See also vslearn.models.bounding_box.BoundingBoxparameter.
 
 
 resource_rc.py

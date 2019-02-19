@@ -24,6 +24,10 @@ from .ui.ui_main_window import Ui_MainWindow
 from .warning import WWarningMessageBox, WErrorMessageBox
 
 
+# TODO clean up the interface with `WButtonGroup` such that no slots need to be
+# connected directly to signals of contained `QAbstractButton` objects.
+# Instead `WButtonGroup` should just emit `check_state_changed` whenever a
+# contained button emits a `toggled` or other signal.
 class WButtonGroup(QButtonGroup):
     check_state_changed = Signal(list)
     """
@@ -143,6 +147,9 @@ class WButtonGroup(QButtonGroup):
 
 
 class WMainWindow(QMainWindow, Ui_MainWindow):
+    """
+
+    """
     # 'selected' means the user has chosen that item/category from
     # an QFileDialog
     files_selected = Signal(str, int)
@@ -167,8 +174,8 @@ class WMainWindow(QMainWindow, Ui_MainWindow):
 
     def __exit__(self, typ, value, traceback):
         """
-        Placeholder. This will eventually take care of closing any remaining
-        open image files.
+        Placeholder. We might some day need to close image or Tensorflow Record
+        files here.
         """
         pass
 
@@ -269,7 +276,7 @@ class WMainWindow(QMainWindow, Ui_MainWindow):
         """
         Widgets that should only be enabled when images have been loaded.
         """
-        widgets = (self.action_from_XML, # self.action_from_CSV,
+        widgets = (self.action_from_XML,  # self.action_from_CSV,
                    self.action_from_JSON, self.accept_reject_button_group,
                    self.action_from_tfrecord)
         for widget in widgets:

@@ -37,9 +37,11 @@ def _loads_from_json(filename: str, **kwargs):
 
 class ImagePathRegistry(object):
     """
-    Note that internally we use only Path objects, but when filenames or
-    directory-type data is returned, it's always returned as a string.
+    A data structure associating image IDs with image file names. An image ID
+    is simply the filename sans extension.
 
+    Parameters
+    ------------
     img_id_to_image_path : OrderedDict
     """
     def __init__(self, img_id_to_image_path: Dict[str, str]) -> None:
@@ -63,6 +65,10 @@ class ImagePathRegistry(object):
     def from_dir(cls,
                  directory: Union[str, Path],
                  extension: str = 'jpg') -> 'ImagePathRegistry':
+        """
+        Convenience method to instantiate a new ImagePathRegistry from a
+        directory containing images.
+        """
         # XXX look for PNG images too?
         directory = Path(directory)
         if not directory.is_dir():
@@ -97,10 +103,28 @@ class ImagePathRegistry(object):
         return iter(self._img_id_to_image_path.values())
 
     def dumps_to_json(self, **kwargs) -> str:
+        """
+        Write file contents to string using JSON. It's the calling function's
+        responsibility to write the contents to disk.
+
+        Parmeters
+        -----------
+        kwargs
+            Passed to json.dumps function.
+        """
         return _dumps_to_json(self._img_id_to_image_path, **kwargs)
 
     @classmethod
-    def loads_from_json(cls, filename: str, **kwargs) -> 'ImagePathRegistry':
+    def loads_from_json(cls, filename: str) -> 'ImagePathRegistry':
+        """
+        Create an ImagePathRegistry from the output of
+        ImagePathRegistry.dumps_to_json()
+
+        Parameters
+        ------------
+        filename : str
+            Path to load JSON data from.
+        """
         result = _loads_from_json(filename)
         return cls(result)
 
@@ -108,7 +132,7 @@ class ImagePathRegistry(object):
 @dataclasses.dataclass
 class Annotation(object):
     """
-    So that parameters defining an annotation are grouped into one place.
+    Container for image annotation information.
     """
     image_id: str
     image_width: int
@@ -135,10 +159,6 @@ class Annotation(object):
     def get_bounding_box(self, index: int) -> 'BoundingBoxParameter':
         return self.bounding_boxes[index]
 
-    def delete_bounding_box(self, index: int) -> None:
-        box = self.bounding_boxes[index]
-        box.delete = True
-
     def update_boxes_correct(self, user: UserID):
         """
         Convenience method for marking all BoundingBoxParameters in
@@ -155,26 +175,31 @@ class Annotation(object):
                     flag: MachineLearningMode,
                     record_filename: str = '',
                     user: UserID = default_machine_user_id,
-                    confidence: float = 0.5):
+                    confidence: float = 0.5) -> 'Annotation':
         """
         Returns an Annotation instance from a tf.Tensor dictionary extracted
-        from a TFRecord by WRecordReader.
+        from a tf.train.Example.
 
         Parameters
         ------------
         tensor : Dict[str, tf.Tensor]
-            `tensor` should be the value of WRecordReader's `read` method.
+            `tensor` should be the value yielded by WRecordReader's `read`
+            method. The keys of `tensor` are attributes of the config class,
+            `ExampleFields`.
 
         flag : MachineLearningMode
-            Describes which attributes to extract from `tensor`.
+            `tensor` keys, although they are specified in the `ExampleFields`
+            config class, also depend on whether they come from a training or
+            inference Tensorflow Record. This flag tells us which attributes
+            of `ExampleFields` to use.
 
         user : UserID
 
         confidence : flaot
             If flag & MachineLearningMode.INFERENCE, a default argument of
-            confidence=0.25 means only bounding boxes whose confidence score
-            is greater than 0.25 will be included in the output list of
-            BoundingBoxParameter.
+            confidence=0.25, for example, means only bounding boxes whose
+            confidence score is greater than 0.25 will be included in the
+            output list of BoundingBoxParameter.
         """
         # keys common to all tensor dictionaries, whether they are from
         # tfrecords containing training or inference data
@@ -230,6 +255,9 @@ class Annotation(object):
 
 
 class AnnotationRegistry(object):
+    """
+
+    """
     annotation_version: Version = VERSION
 
     def __init__(
@@ -355,7 +383,7 @@ class AnnotationRegistry(object):
 
 class XMLFilename(NamedTuple):
     """
-    Used for performing set operations on XML filenames. This objects allow us
+    Used to perform set operations on XML filenames. This object allows us
     to identify xml files with the same 'stem' (see Path.stem) as, for example,
     an image file.
     """
@@ -378,8 +406,20 @@ def annotation_registry_from_labelImg(
         xml_filenames: Iterable[Union[Path, str]],
         user: UserID = default_human_user_id) -> AnnotationRegistry:
     """
-    Note this assumes XML extensions are 'xml', not, for example, 'lxml'.
+    Parses annotations exported by labelImg and stores them in an
+    AnnotationRegistry.
 
+
+    Notes
+    ------
+    We assume XML extensions are 'xml', not, for example, 'lxml'.
+
+    Only annotation data for images in the image_registry is added to the
+    AnnotationRegistry. Where 
+
+
+    Parameters
+    ------------
     image_registry : ImagePathRegistry
 
     xml_filenames : Iterable[Union[Path, str]]
