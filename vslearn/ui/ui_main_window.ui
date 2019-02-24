@@ -495,7 +495,7 @@
   <customwidget>
    <class>WGraphicsView</class>
    <extends>QGraphicsView</extends>
-   <header>vslearn.promoted</header>
+   <header>vslearn.ui.promoted</header>
   </customwidget>
  </customwidgets>
  <resources>

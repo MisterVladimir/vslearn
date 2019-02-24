@@ -251,7 +251,7 @@ class Ui_MainWindow(object):
         self.action_from_tfrecord.setToolTip(QtWidgets.QApplication.translate("MainWindow", "Load bounding boxes from inference", None, -1))
         self.action_from_CSV.setText(QtWidgets.QApplication.translate("MainWindow", "CSV", None, -1))
 
-from vslearn.promoted import WGraphicsView
+from .promoted import WGraphicsView
 from vslearn import resource_rc
 
 if __name__ == "__main__":

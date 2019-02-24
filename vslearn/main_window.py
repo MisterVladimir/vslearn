@@ -24,10 +24,11 @@ from .ui.ui_main_window import Ui_MainWindow
 from .warning import WWarningMessageBox, WErrorMessageBox
 
 
-# TODO clean up the interface with `WButtonGroup` such that no slots need to be
-# connected directly to signals of contained `QAbstractButton` objects.
-# Instead `WButtonGroup` should just emit `check_state_changed` whenever a
-# contained button emits a `toggled` or other signal.
+# TODO clean up the interface with `WButtonGroup` such that no slots need be
+# connected directly to signals of `QAbstractButton` objects inside
+# `WButtonGroup`. Instead, `WButtonGroup` should just emit
+# `check_state_changed` whenever a contained button emits a `toggled` or other
+# signal.
 class WButtonGroup(QButtonGroup):
     check_state_changed = Signal(list)
     """
