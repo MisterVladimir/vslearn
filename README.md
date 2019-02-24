@@ -30,6 +30,12 @@ After cloning the repo, run the following command from the root:
 > python setup.py test
 
 
+User Guide
+------------------
+A comprehensive guide will be published soon, but until then, here's a preview of the app's main window. A black-to-white gradient image has been loaded and three bounding boxes have been drawn.    
+![main_window](https://raw.githubusercontent.com/mistervladimir/vslearn/master/imgs/main_window.png)  
+
+
 Requirements
 ------------------
 pyside2  
