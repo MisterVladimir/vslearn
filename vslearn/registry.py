@@ -381,26 +381,6 @@ class AnnotationRegistry(object):
         return registry
 
 
-class XMLFilename(NamedTuple):
-    """
-    Used to perform set operations on XML filenames. This object allows us
-    to identify xml files with the same 'stem' (see Path.stem) as, for example,
-    an image file.
-    """
-    index: int
-    filename: str
-
-    def __eq__(self, other: Any):
-        return other == self.stem
-
-    def __hash__(self) -> int:
-        return hash(self.stem)
-
-    @property
-    def stem(self):
-        return os.path.basename(self.filename).split(os.path.extsep)[0]
-
-
 def annotation_registry_from_labelImg(
         image_registry: ImagePathRegistry,
         xml_filenames: Iterable[Union[Path, str]],
@@ -435,11 +415,10 @@ def annotation_registry_from_labelImg(
 
     # match up XML filenames with image IDs
     image_keys: Set[str] = set(image_registry.image_ids)
-    xml_files: Set[XMLFilename] = set(
-        (XMLFilename(index=i, filename=str(x))
-        for i, x in enumerate(xml_filenames)))
-    used_xml_files: Set[XMLFilename] = image_keys.intersection(xml_files)
-    unused_xml_files: Set[str] = xml_files.difference(image_keys)
+    xml_files: Dict[str, str] = {
+        os.path.splitext(os.path.basename(s))[0]: s for s in xml_filenames}
+    used_xml_files: Set[str] = image_keys.intersection(xml_files)
+    unused_xml_files: Set[str] = image_keys.difference(xml_files)
     if unused_xml_files:
         warnings.warn(
             '\n'.join((unused for unused in unused_xml_files)) +
@@ -447,7 +426,7 @@ def annotation_registry_from_labelImg(
             "image ID in the registry.")
     bounding_box_keys = ['label', 'xmin', 'ymin', 'xmax', 'ymax']
     for xml in used_xml_files:
-        filename = xml.filename
+        filename = xml_files[xml]
         image_id, imwidth, imheight, data = \
             parse_labelImg_xml_file(filename)
         common_annotation_kwargs = dict(
