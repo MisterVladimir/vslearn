@@ -7,7 +7,9 @@ vslearn
 
 Introduction
 ------------------
-*vslearn* is an image annotation tool that helps non-technical folks generate ground truth bounding boxes used in training neural networks. Basically: (1) humans draw bounding boxes around objects of interest and (2) feed the images + bounding boxes into a neural net so it can learn to predict bounding boxes around similar objects. I created this product as part of my [Insight Data Science](https://www.insightdatascience.com/) project consulting for [WellthApp](https://wellthapp.com/home).
+*vslearn* is an image annotation tool for labeling objects of interest in images. Bounding boxes and images may be imported from [Tensorflow records](https://www.tensorflow.org/tutorials/load_data/tf_records), which can be used directly with [Tensorflow's Object Detection API](https://github.com/tensorflow/models/tree/master/research/object_detection#tensorflow-object-detection-api). Conversely, users may import bounding boxes predicted with the object detection API, or previously saved by [LabelImg](https://github.com/tzutalin/labelImg#labelimg).
+
+I created this product as part of my [Insight Data Science](https://www.insightdatascience.com/) project consulting for [WellthApp](https://wellthapp.com/home).
 
 
 Requirements
